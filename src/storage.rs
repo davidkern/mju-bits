@@ -155,3 +155,32 @@ impl_from!(usize, u16);
 impl_tryfrom!(usize, u32);
 impl_tryfrom!(usize, u64);
 impl_from!(usize, usize);
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_send() {
+        struct Marker;
+
+        fn assert_send<T: Send>() {}
+        assert_send::<Storage<Marker, u8>>();
+        assert_send::<Storage<Marker, u16>>();
+        assert_send::<Storage<Marker, u32>>();
+        assert_send::<Storage<Marker, u64>>();
+        assert_send::<Storage<Marker, usize>>();
+    }
+
+    #[test]
+    fn test_sync() {
+        struct Marker;
+
+        fn assert_sync<T: Sync>() {}
+        assert_sync::<Storage<Marker, u8>>();
+        assert_sync::<Storage<Marker, u16>>();
+        assert_sync::<Storage<Marker, u32>>();
+        assert_sync::<Storage<Marker, u64>>();
+        assert_sync::<Storage<Marker, usize>>();
+    }
+}
