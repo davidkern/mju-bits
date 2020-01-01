@@ -1,6 +1,6 @@
 # mju-bits
 
-`#[no_std]` implementation of typed bitfield access for `u8`, `u16`, `u32` and `u64`[^1].
+`#[no_std]` implementation of typed bitfield access for `u8`, `u16`, `u32`, `u64` and `usize`.
 
 
 Usage:
@@ -14,7 +14,7 @@ type RegisterAll = BitField<Register, B0, B31>;
 type RegisterFieldA = BitField<Register, B0, B7>;
 type RegisterFieldB = BitField<Register, B8, B24>;
 
-let mut reg = Register::new(0);
+let mut reg = Register::new();
 reg.set::<RegisterFieldA>(0x56);
 reg.set::<RegisterFieldB>(0x1234);
 assert_eq!(reg.get::<RegisterAll>(), 0x00123456);
@@ -34,8 +34,6 @@ type FooField = BitField<Foo, B0, B1>;
 struct BarMarker;
 type Bar = Storage<BarMarker, u8>;
 
-let bar = Bar::new(0);
+let bar = Bar::new();
 bar.get::<FooField>();
 ```
-
-[^1]: for platforms where `#[cfg(target_pointer_width="64")]`

@@ -39,7 +39,7 @@ pub struct BitFieldImpl<TOwner, Shift, Mask>(
 pub trait BitFieldTrait {
     type Owner;
     const SHIFT: u32;
-    const MASK: usize;
+    const MASK: u64;
 }
 
 impl<TOwner, TShift, TMask> BitFieldTrait for BitFieldImpl<TOwner, TShift, TMask>
@@ -49,7 +49,7 @@ where
 {
     type Owner = TOwner;
     const SHIFT: u32 = TShift::U32;
-    const MASK: usize = TMask::USIZE;
+    const MASK: u64 = TMask::U64;
 }
 
 type BitMask<X> = Shleft<U1, X>;
@@ -106,99 +106,35 @@ pub use typenum::U28 as B28;
 pub use typenum::U29 as B29;
 pub use typenum::U30 as B30;
 pub use typenum::U31 as B31;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U32 as B32;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U33 as B33;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U34 as B34;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U35 as B35;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U36 as B36;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U37 as B37;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U38 as B38;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U39 as B39;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U40 as B40;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U41 as B41;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U42 as B42;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U43 as B43;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U44 as B44;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U45 as B45;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U46 as B46;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U47 as B47;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U48 as B48;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U49 as B49;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U50 as B50;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U51 as B51;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U52 as B52;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U53 as B53;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U54 as B54;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U55 as B55;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U56 as B56;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U57 as B57;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U58 as B58;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U59 as B59;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U60 as B60;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U61 as B61;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U62 as B62;
-
-#[cfg(target_pointer_width="64")]
 pub use typenum::U63 as B63;

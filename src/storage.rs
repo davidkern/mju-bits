@@ -16,6 +16,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+use core::convert::TryFrom;
+use core::fmt;
 use core::marker::PhantomData;
 use crate::bitfield::BitFieldTrait;
 
@@ -23,13 +25,14 @@ use crate::bitfield::BitFieldTrait;
 pub trait StorageData
 {
     // shifts and masks storage and returns field value
-    fn from_storage(&self, mask: usize, shift: u32) -> Self;
+    fn get_bitfield(&self, mask: Self, shift: u32) -> Self;
 
     // shifts and masks from field to storage
-    fn to_storage(&mut self, mask: usize, shift: u32, field: Self);
+    fn set_bitfield(&mut self, mask: Self, shift: u32, field: Self);
 }
 
 /// Stores a `TData` as a unique type derived from `TMarker`
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Storage<TMarker, TData>
 where TData: StorageData
 {
@@ -40,53 +43,115 @@ where TData: StorageData
     owner: PhantomData<TMarker>
 }
 
-impl<TData, TMarker> Storage<TMarker, TData>
-where TData: StorageData
-{
-    /// Construct a new Storage with a TData::default() value
-    pub fn new(initial: TData) -> Self {
-        Storage {
-            data: initial,
-            owner: PhantomData,
-        }
-    }
-
-    /// Gets the BitField value from storage
-    pub fn get<TBitField>(&self) -> TData
-    where
-        TBitField: BitFieldTrait<Owner=Self>
-    {
-        self.data.from_storage(TBitField::MASK, TBitField::SHIFT)
-    }
-
-    /// Sets the BitField value in storage
-    pub fn set<TBitField>(&mut self, value: TData)
-    where
-        TBitField: BitFieldTrait<Owner=Self>
-    {
-        self.data.to_storage(TBitField::MASK, TBitField::SHIFT, value);
-    }
-}
-
-macro_rules! impl_storagedata {
+macro_rules! impl_storage {
     ($type:ident) => {
+        impl<TMarker> Storage<TMarker, $type>
+        {
+            /// Construct a new Storage
+            pub fn new() -> Self {
+                Storage {
+                    data: $type::default(),
+                    owner: PhantomData,
+                }
+            }
+        
+            /// Gets the BitField value from storage
+            pub fn get<TBitField>(&self) -> $type
+            where
+                TBitField: BitFieldTrait<Owner=Self>
+            {
+                self.data.get_bitfield(TBitField::MASK as $type, TBitField::SHIFT)
+            }
+        
+            /// Sets the BitField value in storage
+            pub fn set<TBitField>(&mut self, value: $type)
+            where
+                TBitField: BitFieldTrait<Owner=Self>
+            {
+                self.data.set_bitfield(TBitField::MASK as $type, TBitField::SHIFT, value);
+            }
+        }
+
         impl StorageData for $type {
-            fn from_storage(&self, mask: usize, shift: u32) -> Self {
+            fn get_bitfield(&self, mask: Self, shift: u32) -> Self {
                 (self & mask as $type).wrapping_shr(shift)
             }
         
-            fn to_storage(&mut self, mask: usize, shift: u32, field: Self) {
+            fn set_bitfield(&mut self, mask: Self, shift: u32, field: Self) {
                 *self = *self & !mask as $type | (field.wrapping_shl(shift) & mask as $type);
             }
-        }        
+        }
+
+        impl<TMarker> fmt::Display for Storage<TMarker, $type>
+        {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "{}", self.data)
+            }
+        }
     };
 }
 
-impl_storagedata!(usize);
-impl_storagedata!(u8);
-impl_storagedata!(u16);
-impl_storagedata!(u32);
+macro_rules! impl_from {
+    ($type:ident, $from:ident) => {
+        impl<TMarker> From<$from> for Storage<TMarker, $type>
+        {
+            fn from(value: $from) -> Self {
+                Self {
+                    data: value.into(),
+                    owner: PhantomData,
+                }
+            }
+        }
+    };
+}
 
-// Only implemented if usize is big enough (usize is used for masking)
-#[cfg(target_pointer_width="64")]
-impl_storagedata!(u64);
+macro_rules! impl_tryfrom {
+    ($type:ident, $from:ident) => {
+        impl<TMarker> TryFrom<$from> for Storage<TMarker, $type>
+        {
+            type Error = <$type as TryFrom<$from>>::Error;
+
+            fn try_from(value: $from) -> Result<Self, <$type as TryFrom<$from>>::Error> {
+                Ok(Self {
+                    data: $type::try_from(value)?,
+                    owner: PhantomData,
+                })
+            }
+        }
+    };
+}
+
+impl_storage!(u8);
+impl_from!(u8, u8);
+impl_tryfrom!(u8, u16);
+impl_tryfrom!(u8, u32);
+impl_tryfrom!(u8, u64);
+impl_tryfrom!(u8, usize);
+
+impl_storage!(u16);
+impl_from!(u16, u8);
+impl_from!(u16, u16);
+impl_tryfrom!(u16, u32);
+impl_tryfrom!(u16, u64);
+impl_tryfrom!(u16, usize);
+
+impl_storage!(u32);
+impl_from!(u32, u8);
+impl_from!(u32, u16);
+impl_from!(u32, u32);
+impl_tryfrom!(u32, u64);
+impl_tryfrom!(u32, usize);
+
+impl_storage!(u64);
+impl_from!(u64, u8);
+impl_from!(u64, u16);
+impl_from!(u64, u32);
+impl_from!(u64, u64);
+impl_tryfrom!(u64, usize);
+
+impl_storage!(usize);
+impl_from!(usize, u8);
+impl_from!(usize, u16);
+impl_tryfrom!(usize, u32);
+impl_tryfrom!(usize, u64);
+impl_from!(usize, usize);

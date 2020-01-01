@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//! `#[no_std]` implementation of typed bitfield access for `u8`, `u16`, `u32` and `u64`[^1].
+//! `#[no_std]` implementation of typed bitfield access for `u8`, `u16`, `u32`, `u64` and `usize`.
 //!
 //!
 //! Usage:
@@ -30,7 +30,7 @@ limitations under the License.
 //! type RegisterFieldA = BitField<Register, B0, B7>;
 //! type RegisterFieldB = BitField<Register, B8, B24>;
 //!
-//! let mut reg = Register::new(0);
+//! let mut reg = Register::new();
 //! reg.set::<RegisterFieldA>(0x56);
 //! reg.set::<RegisterFieldB>(0x1234);
 //! assert_eq!(reg.get::<RegisterAll>(), 0x00123456);
@@ -50,11 +50,9 @@ limitations under the License.
 //! struct BarMarker;
 //! type Bar = Storage<BarMarker, u8>;
 //!
-//! let bar = Bar::new(0);
+//! let bar = Bar::new();
 //! bar.get::<FooField>();
 //! ```
-//!
-//! [^1]: for platforms where `target_pointer_width="64"`
 
 #![no_std]
 
@@ -78,7 +76,7 @@ mod test {
                 type RegisterFieldLo = BitField<Register, $lo0, $lo1>;
                 type RegisterFieldHi = BitField<Register, $hi0, $hi1>;
         
-                let mut reg = Register::new(0);
+                let mut reg = Register::new();
                 assert_eq!(reg.get::<RegisterFieldLo>(), 0);
                 assert_eq!(reg.get::<RegisterFieldHi>(), 0);
         
