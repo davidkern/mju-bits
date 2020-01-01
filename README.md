@@ -38,4 +38,4 @@ let bar = Bar::new(0);
 bar.get::<FooField>();
 ```
 
-[^1]: for platforms where `target_pointer_width="64"`
+[^1]: for platforms where `#[cfg(target_pointer_width="64")]`
