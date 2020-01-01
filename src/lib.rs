@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//! Implementation of typed bitfield access for `u8`, `u16`, `u32` and `u64`[^1].
+//! `#[no_std]` implementation of typed bitfield access for `u8`, `u16`, `u32` and `u64`[^1].
 //!
 //!
 //! Usage:
