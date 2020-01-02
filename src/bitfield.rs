@@ -38,11 +38,11 @@ use typenum::{
 ///
 /// While this type can be used directly, it is more convenient to use the `BitField` type
 /// alias to define a bit range rather than the lower-level shift and mask.
-pub struct BitFieldImpl<TOwner, Shift, Mask>(
-    PhantomData<TOwner>,
-    PhantomData<Shift>,
-    PhantomData<Mask>,
-);
+pub struct BitFieldImpl<TOwner, Shift, Mask> {
+    owner: PhantomData<TOwner>,
+    shift: PhantomData<Shift>,
+    mask: PhantomData<Mask>,
+}
 
 /// Tracks the `Owner`, shift and mask used by the `Storage::*` methods to provide access
 /// to an owned bit field.
