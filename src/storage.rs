@@ -88,6 +88,34 @@ macro_rules! impl_storage {
                 write!(f, "{}", self.data)
             }
         }
+
+        impl<TMarker> fmt::UpperHex for Storage<TMarker, $type>
+        {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::UpperHex::fmt(&self, f)
+            }
+        }
+
+        impl<TMarker> fmt::LowerHex for Storage<TMarker, $type>
+        {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::LowerHex::fmt(&self, f)
+            }
+        }
+
+        impl<TMarker> fmt::Octal for Storage<TMarker, $type>
+        {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::Octal::fmt(&self, f)
+            }
+        }
+
+        impl<TMarker> fmt::Binary for Storage<TMarker, $type>
+        {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::Binary::fmt(&self, f)
+            }
+        }
     };
 }
 
