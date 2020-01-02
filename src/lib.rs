@@ -58,11 +58,13 @@ limitations under the License.
 
 #![no_std]
 
-pub mod storage;
+pub mod bit;
 pub mod bitfield;
+pub mod storage;
 
-pub use storage::*;
+pub use bit::*;
 pub use bitfield::*;
+pub use storage::*;
 
 #[cfg(test)]
 mod test {

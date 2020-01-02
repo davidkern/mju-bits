@@ -16,25 +16,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//! Wrapper type for unsigned primitives allowing typed bitfield manipulation
+
 use core::convert::TryFrom;
 use core::fmt;
 use core::marker::PhantomData;
 use crate::bitfield::BitFieldTrait;
 
-/// Shift and masking functionality required for storage types
-pub trait StorageData
+/// Bitfield access functionality
+pub trait BitFieldAccess
 {
-    // shifts and masks storage and returns field value
+    /// Returns a copy of `self` masked by `mask` and shifted right by `shift`
     fn get_bitfield(&self, mask: Self, shift: u32) -> Self;
 
-    // shifts and masks from field to storage
-    fn set_bitfield(&mut self, mask: Self, shift: u32, field: Self);
+    /// Shifts value left by `shift` and replaces bits in `self` using `mask`.
+    fn set_bitfield(&mut self, mask: Self, shift: u32, value: Self);
 }
 
-/// Stores a `TData` as a unique type derived from `TMarker`
+/// Stores a primitive value uniquely tagged with type `TMarker` and allows
+/// bitfield access to the value through specializations of the `BitField` type.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Storage<TMarker, TData>
-where TData: StorageData
+where TData: BitFieldAccess
 {
     /// The actual data
     data: TData,
@@ -72,7 +75,7 @@ macro_rules! impl_storage {
             }
         }
 
-        impl StorageData for $type {
+        impl BitFieldAccess for $type {
             fn get_bitfield(&self, mask: Self, shift: u32) -> Self {
                 (self & mask as $type).wrapping_shr(shift)
             }
