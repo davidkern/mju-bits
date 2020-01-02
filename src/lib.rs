@@ -16,6 +16,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#![doc(html_root_url = "https://docs.rs/mju-bits/0.1.0")]
+
 //! `#[no_std]` implementation of typed bitfield access for `u8`, `u16`, `u32`, `u64` and `usize`.
 //!
 //!

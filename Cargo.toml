@@ -13,3 +13,6 @@ edition = "2018"
 
 [dependencies]
 typenum = "1.11.2"
+
+[dev-dependencies]
+version-sync = "0.8"
