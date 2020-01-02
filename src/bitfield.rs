@@ -46,7 +46,10 @@ pub struct BitFieldImpl<TOwner, Shift, Mask> {
 
 /// Tracks the `Owner`, shift and mask used by the `Storage::*` methods to provide access
 /// to an owned bit field.
-pub trait BitFieldTrait {
+///
+/// Note: this trait is sealed against implementation outside this crate. This
+/// restriction will be lifted once the API has stabilized.
+pub trait BitFieldTrait : private::Sealed {
     /// The owner, typically a `Storage`, bound to this bit field
     type Owner;
 
@@ -55,6 +58,13 @@ pub trait BitFieldTrait {
 
     /// The bit mask used to to select or clear the field bits in the owner
     const MASK: u64;
+}
+
+// Seal the BitFieldTrait trait
+mod private {
+    pub trait Sealed { }
+
+    impl<TOwner, Shift, Mask> Sealed for super::BitFieldImpl<TOwner, Shift, Mask> { }
 }
 
 /// Implementation for `BitFieldImpl` explicitly converts the typenum shift and mask calculations

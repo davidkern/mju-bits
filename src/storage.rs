@@ -24,13 +24,28 @@ use core::marker::PhantomData;
 use crate::bitfield::BitFieldTrait;
 
 /// Bitfield access functionality
-pub trait BitFieldAccess
+///
+/// Note: this trait is sealed against implementation outside this crate. This
+/// restriction will be lifted once the API has stabilized.
+
+pub trait BitFieldAccess : private::Sealed
 {
     /// Returns a copy of `self` masked by `mask` and shifted right by `shift`
     fn get_bitfield(&self, mask: Self, shift: u32) -> Self;
 
     /// Shifts value left by `shift` and replaces bits in `self` using `mask`.
     fn set_bitfield(&mut self, mask: Self, shift: u32, value: Self);
+}
+
+// seal the BitFieldAccess trait
+mod private {
+    pub trait Sealed {}
+
+    impl Sealed for u8 { }
+    impl Sealed for u16 { }
+    impl Sealed for u32 { }
+    impl Sealed for u64 { }
+    impl Sealed for usize { }
 }
 
 /// Stores a primitive value uniquely tagged with type `TMarker` and allows
