@@ -24,13 +24,14 @@ limitations under the License.
 //! Usage:
 //!
 //! ```
+//! use typenum::*;
 //! use mju_bits::*;
 //!
 //! struct RegisterMarker;
 //! type Register = Storage<RegisterMarker, u32>;
-//! type RegisterAll = BitField<Register, B0, B31>;
-//! type RegisterFieldA = BitField<Register, B0, B7>;
-//! type RegisterFieldB = BitField<Register, B8, B24>;
+//! type RegisterAll = BitField<Register, U0, U31>;
+//! type RegisterFieldA = BitField<Register, U0, U7>;
+//! type RegisterFieldB = BitField<Register, U8, U24>;
 //!
 //! let mut reg = Register::new();
 //! reg.set::<RegisterFieldA>(0x56);
@@ -47,7 +48,7 @@ limitations under the License.
 //!
 //! struct FooMarker;
 //! type Foo = Storage<FooMarker, u8>;
-//! type FooField = BitField<Foo, B0, B1>;
+//! type FooField = BitField<Foo, U0, U1>;
 //!
 //! struct BarMarker;
 //! type Bar = Storage<BarMarker, u8>;
@@ -58,17 +59,18 @@ limitations under the License.
 
 #![no_std]
 
-pub mod bit;
 pub mod bitfield;
 pub mod storage;
 
-pub use bit::*;
 pub use bitfield::*;
 pub use storage::*;
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use typenum::{
+        U0, U3, U4, U7, U8, U15, U16, U31, U32, U63,
+    };
 
     macro_rules! test {
         ($name:ident, $type:ident, $lo0:ident, $lo1:ident, $hi0:ident, $hi1:ident, $lo:expr, $hi:expr, $all:expr) => {
@@ -99,24 +101,24 @@ mod test {
 
     test!(
         test_u8, u8,
-        B0, B3,
-        B4, B7,
+        U0, U3,
+        U4, U7,
         0b1100, 0b1010,
         0b10101100
     );
 
     test!(
         test_u16, u16,
-        B0, B7,
-        B8, B15,
+        U0, U7,
+        U8, U15,
         0b11110000, 0b10101010,
         0b10101010_11110000
     );
 
     test!(
         test_u32, u32,
-        B0, B15,
-        B16, B31,
+        U0, U15,
+        U16, U31,
         0b11111111_00000000, 0b10101010_10101010,
         0b10101010_10101010_11111111_00000000
     );
@@ -124,8 +126,8 @@ mod test {
     #[cfg(target_pointer_width="64")]
     test!(
         test_u64, u64,
-        B0, B31,
-        B32, B63,
+        U0, U31,
+        U32, U63,
         0b11111111_11111111_00000000_00000000, 0b10101010_10101010_10101010_10101010,
         0b10101010_10101010_10101010_10101010_11111111_11111111_00000000_00000000
     );
