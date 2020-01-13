@@ -31,22 +31,32 @@ use crate::bitfield::BitFieldTrait;
 
 pub trait BitFieldAccess : private::Sealed
 {
+    type TData;
+
     /// Returns a copy of `self` masked by `mask` and shifted right by `shift`
-    fn get_bitfield(&self, mask: Self, shift: u32) -> Self;
+    fn get_bitfield(&self, mask: Self::TData, shift: u32) -> Self::TData;
 
     /// Shifts value left by `shift` and replaces bits in `self` using `mask`.
-    fn set_bitfield(&mut self, mask: Self, shift: u32, value: Self);
+    fn set_bitfield(&mut self, mask: Self::TData, shift: u32, value: Self::TData);
 }
 
 // seal the BitFieldAccess trait
 mod private {
+    use crate::access::StorageAccess;
+    use super::Storage;
+
     pub trait Sealed {}
 
-    impl Sealed for u8 { }
-    impl Sealed for u16 { }
-    impl Sealed for u32 { }
-    impl Sealed for u64 { }
-    impl Sealed for usize { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, u8>
+        where TAccess: StorageAccess { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, u16>
+        where TAccess: StorageAccess { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, u32>
+        where TAccess: StorageAccess { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, u64>
+        where TAccess: StorageAccess { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, usize>
+        where TAccess: StorageAccess { }
 }
 
 /// Stores a primitive value uniquely tagged with type `TOwner` and allows
@@ -54,8 +64,7 @@ mod private {
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Storage<TOwner, TAccess, TData>
 where
-    TAccess: StorageAccess,
-    TData: BitFieldAccess
+    TAccess: StorageAccess
 {
     /// The actual data
     data: TData,
@@ -86,7 +95,7 @@ macro_rules! impl_storage {
             where
                 TBitField: BitFieldTrait<Owner=Self>
             {
-                self.data.get_bitfield(TBitField::MASK as $type, TBitField::SHIFT)
+                self.get_bitfield(TBitField::MASK as $type, TBitField::SHIFT)
             }
         
             /// Sets the BitField value in storage
@@ -94,17 +103,22 @@ macro_rules! impl_storage {
             where
                 TBitField: BitFieldTrait<Owner=Self>
             {
-                self.data.set_bitfield(TBitField::MASK as $type, TBitField::SHIFT, value);
+                self.set_bitfield(TBitField::MASK as $type, TBitField::SHIFT, value);
             }
         }
 
-        impl BitFieldAccess for $type {
-            fn get_bitfield(&self, mask: Self, shift: u32) -> Self {
-                (self & mask as $type).wrapping_shr(shift)
+        impl<TOwner, TAccess> BitFieldAccess for Storage<TOwner, TAccess, $type>
+        where
+            TAccess: StorageAccess
+        {
+            type TData = $type;
+
+            fn get_bitfield(&self, mask: $type, shift: u32) -> $type {
+                (self.data & mask as $type).wrapping_shr(shift)
             }
         
-            fn set_bitfield(&mut self, mask: Self, shift: u32, field: Self) {
-                *self = *self & !mask as $type | (field.wrapping_shl(shift) & mask as $type);
+            fn set_bitfield(&mut self, mask: $type, shift: u32, field: $type) {
+                self.data = self.data & !mask as $type | (field.wrapping_shl(shift) & mask as $type);
             }
         }
 
