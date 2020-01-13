@@ -50,29 +50,26 @@ pub trait BitFieldWriteAccess : private::Sealed
 
 // seal the BitFieldAccess trait
 mod private {
-    use crate::access::StorageAccess;
     use super::Storage;
 
     pub trait Sealed {}
 
-    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, u8>
-        where TAccess: StorageAccess { }
-    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, u16>
-        where TAccess: StorageAccess { }
-    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, u32>
-        where TAccess: StorageAccess { }
-    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, u64>
-        where TAccess: StorageAccess { }
-    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, usize>
-        where TAccess: StorageAccess { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, u8> { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, u16> { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, u32> { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, u64> { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, usize> { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, *const u8> { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, *const u16> { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, *const u32> { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, *const u64> { }
+    impl<TOwner, TAccess> Sealed for Storage<TOwner, TAccess, *const usize> { }
 }
 
 /// Stores a primitive value uniquely tagged with type `TOwner` and allows
 /// bitfield access to the value through specializations of the `BitField` type.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Storage<TOwner, TAccess, TData>
-where
-    TAccess: StorageAccess
 {
     /// The actual data
     data: TData,
@@ -85,39 +82,48 @@ where
 }
 
 macro_rules! impl_storage {
-    ($type:ident) => {
+    ($type:ty, $value_type:ty) => {
         impl<TOwner, TAccess> Storage<TOwner, TAccess, $type>
-        where TAccess: StorageAccess
         {
             /// Construct a new Storage
-            pub fn new(initial: $type) -> Self {
+            pub const fn new(initial: $type) -> Self {
                 Storage {
                     data: initial,
                     access: PhantomData,
                     owner: PhantomData,
                 }
             }
-        
+        }
+
+        impl<TOwner, TAccess> Storage<TOwner, TAccess, $type>
+            where TAccess: StorageReadAccess
+        {
             /// Gets the BitField value from storage
-            pub fn get<TBitField>(&self) -> $type
+            pub fn get<TBitField>(&self) -> $value_type
             where
                 TBitField: BitFieldTrait<Owner=Self>
             {
-                self.get_bitfield(TBitField::MASK as $type, TBitField::SHIFT)
-            }
-        
-            /// Sets the BitField value in storage
-            pub fn set<TBitField>(&mut self, value: $type)
-            where
-                TBitField: BitFieldTrait<Owner=Self>
-            {
-                self.set_bitfield(TBitField::MASK as $type, TBitField::SHIFT, value);
+                self.get_bitfield(TBitField::MASK as $value_type, TBitField::SHIFT)
             }
         }
 
+        impl<TOwner, TAccess> Storage<TOwner, TAccess, $type>
+            where TAccess: StorageWriteAccess
+        {
+            /// Sets the BitField value in storage
+            pub fn set<TBitField>(&mut self, value: $value_type)
+            where
+                TBitField: BitFieldTrait<Owner=Self>
+            {
+                self.set_bitfield(TBitField::MASK as $value_type, TBitField::SHIFT, value);
+            }
+        }
+    }
+}
+
+macro_rules! impl_storage_access {
+    ($type:ty) => {
         impl<TOwner, TAccess> BitFieldReadAccess for Storage<TOwner, TAccess, $type>
-        where
-            TAccess: StorageAccess
         {
             type TData = $type;
 
@@ -127,8 +133,6 @@ macro_rules! impl_storage {
         }
 
         impl<TOwner, TAccess> BitFieldWriteAccess for Storage<TOwner, TAccess, $type>
-        where
-            TAccess: StorageAccess
         {
             type TData = $type;
 
@@ -179,6 +183,94 @@ macro_rules! impl_storage {
     };
 }
 
+macro_rules! impl_storage_const_ptr_access {
+    ($type:ty) => {
+        impl<TOwner, TAccess> BitFieldReadAccess for Storage<TOwner, TAccess, *const $type>
+        where
+            TAccess: StorageAccess
+        {
+            type TData = $type;
+
+            fn get_bitfield(&self, mask: $type, shift: u32) -> $type {
+                let data;
+
+                unsafe {
+                    data = *self.data;
+                }
+                
+                (data & mask as $type).wrapping_shr(shift)
+            }
+        }
+
+        impl<TOwner, TAccess> BitFieldWriteAccess for Storage<TOwner, TAccess, *const $type>
+        where
+            TAccess: StorageAccess
+        {
+            type TData = $type;
+
+            fn set_bitfield(&mut self, mask: $type, shift: u32, field: $type) {
+                let data;
+
+                unsafe {
+                    data = *self.data;
+                }
+
+                let result = data & !mask as $type | (field.wrapping_shl(shift) & mask as $type);
+
+                unsafe {
+                    *(self.data as *mut $type) = result;
+                }
+            }
+        }
+
+        impl<TOwner, TAccess> fmt::Display for Storage<TOwner, TAccess, *const $type>
+        where TAccess: StorageReadAccess
+        {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                let data;
+
+                unsafe {
+                    data = *self.data;
+                }
+
+                write!(f, "{}", data)
+            }
+        }
+
+        impl<TOwner, TAccess> fmt::UpperHex for Storage<TOwner, TAccess, *const $type>
+        where TAccess: StorageReadAccess
+        {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::UpperHex::fmt(&self, f)
+            }
+        }
+
+        impl<TOwner, TAccess> fmt::LowerHex for Storage<TOwner, TAccess, *const $type>
+        where TAccess: StorageReadAccess
+        {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::LowerHex::fmt(&self, f)
+            }
+        }
+
+        impl<TOwner, TAccess> fmt::Octal for Storage<TOwner, TAccess, *const $type>
+        where TAccess: StorageReadAccess
+        {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::Octal::fmt(&self, f)
+            }
+        }
+
+        impl<TOwner, TAccess> fmt::Binary for Storage<TOwner, TAccess, *const $type>
+        where TAccess: StorageReadAccess
+        {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::Binary::fmt(&self, f)
+            }
+        }
+    };
+}
+
 macro_rules! impl_from {
     ($type:ident, $from:ident) => {
         impl<TOwner, TAccess> From<$from> for Storage<TOwner, TAccess, $type>
@@ -213,40 +305,60 @@ macro_rules! impl_tryfrom {
     };
 }
 
-impl_storage!(u8);
+impl_storage!(u8, u8);
+impl_storage_access!(u8);
 impl_from!(u8, u8);
 impl_tryfrom!(u8, u16);
 impl_tryfrom!(u8, u32);
 impl_tryfrom!(u8, u64);
 impl_tryfrom!(u8, usize);
 
-impl_storage!(u16);
+impl_storage!(u16, u16);
+impl_storage_access!(u16);
 impl_from!(u16, u8);
 impl_from!(u16, u16);
 impl_tryfrom!(u16, u32);
 impl_tryfrom!(u16, u64);
 impl_tryfrom!(u16, usize);
 
-impl_storage!(u32);
+impl_storage!(u32, u32);
+impl_storage_access!(u32);
 impl_from!(u32, u8);
 impl_from!(u32, u16);
 impl_from!(u32, u32);
 impl_tryfrom!(u32, u64);
 impl_tryfrom!(u32, usize);
 
-impl_storage!(u64);
+impl_storage!(u64, u64);
+impl_storage_access!(u64);
 impl_from!(u64, u8);
 impl_from!(u64, u16);
 impl_from!(u64, u32);
 impl_from!(u64, u64);
 impl_tryfrom!(u64, usize);
 
-impl_storage!(usize);
+impl_storage!(usize, usize);
+impl_storage_access!(usize);
 impl_from!(usize, u8);
 impl_from!(usize, u16);
 impl_tryfrom!(usize, u32);
 impl_tryfrom!(usize, u64);
 impl_from!(usize, usize);
+
+impl_storage!(*const u8, u8);
+impl_storage_const_ptr_access!(u8);
+
+impl_storage!(*const u16, u16);
+impl_storage_const_ptr_access!(u16);
+
+impl_storage!(*const u32, u32);
+impl_storage_const_ptr_access!(u32);
+
+impl_storage!(*const u64, u64);
+impl_storage_const_ptr_access!(u64);
+
+impl_storage!(*const usize, usize);
+impl_storage_const_ptr_access!(usize);
 
 #[cfg(test)]
 mod test {
