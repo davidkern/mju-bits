@@ -59,6 +59,7 @@ limitations under the License.
 
 #![no_std]
 
+pub mod access;
 pub mod bitfield;
 pub mod storage;
 

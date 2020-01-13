@@ -21,6 +21,7 @@ limitations under the License.
 use core::convert::TryFrom;
 use core::fmt;
 use core::marker::PhantomData;
+use crate::access::*;
 use crate::bitfield::BitFieldTrait;
 
 /// Bitfield access functionality
