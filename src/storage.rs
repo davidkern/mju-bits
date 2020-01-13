@@ -24,17 +24,25 @@ use core::marker::PhantomData;
 use crate::access::*;
 use crate::bitfield::BitFieldTrait;
 
-/// Bitfield access functionality
+/// Bitfield read access functionality
 ///
 /// Note: this trait is sealed against implementation outside this crate. This
 /// restriction will be lifted once the API has stabilized.
-
-pub trait BitFieldAccess : private::Sealed
+pub trait BitFieldReadAccess : private::Sealed
 {
     type TData;
 
     /// Returns a copy of `self` masked by `mask` and shifted right by `shift`
     fn get_bitfield(&self, mask: Self::TData, shift: u32) -> Self::TData;
+}
+
+/// Bitfield write access functionality
+///
+/// Note: this trait is sealed against implementation outside this crate. This
+/// restriction will be lifted once the API has stabilized.
+pub trait BitFieldWriteAccess : private::Sealed
+{
+    type TData;
 
     /// Shifts value left by `shift` and replaces bits in `self` using `mask`.
     fn set_bitfield(&mut self, mask: Self::TData, shift: u32, value: Self::TData);
@@ -107,7 +115,7 @@ macro_rules! impl_storage {
             }
         }
 
-        impl<TOwner, TAccess> BitFieldAccess for Storage<TOwner, TAccess, $type>
+        impl<TOwner, TAccess> BitFieldReadAccess for Storage<TOwner, TAccess, $type>
         where
             TAccess: StorageAccess
         {
@@ -116,14 +124,21 @@ macro_rules! impl_storage {
             fn get_bitfield(&self, mask: $type, shift: u32) -> $type {
                 (self.data & mask as $type).wrapping_shr(shift)
             }
-        
+        }
+
+        impl<TOwner, TAccess> BitFieldWriteAccess for Storage<TOwner, TAccess, $type>
+        where
+            TAccess: StorageAccess
+        {
+            type TData = $type;
+
             fn set_bitfield(&mut self, mask: $type, shift: u32, field: $type) {
                 self.data = self.data & !mask as $type | (field.wrapping_shl(shift) & mask as $type);
             }
         }
 
         impl<TOwner, TAccess> fmt::Display for Storage<TOwner, TAccess, $type>
-        where TAccess: StorageAccess
+        where TAccess: StorageReadAccess
         {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 write!(f, "{}", self.data)
@@ -131,7 +146,7 @@ macro_rules! impl_storage {
         }
 
         impl<TOwner, TAccess> fmt::UpperHex for Storage<TOwner, TAccess, $type>
-        where TAccess: StorageAccess
+        where TAccess: StorageReadAccess
         {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::UpperHex::fmt(&self, f)
@@ -139,7 +154,7 @@ macro_rules! impl_storage {
         }
 
         impl<TOwner, TAccess> fmt::LowerHex for Storage<TOwner, TAccess, $type>
-        where TAccess: StorageAccess
+        where TAccess: StorageReadAccess
         {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::LowerHex::fmt(&self, f)
@@ -147,7 +162,7 @@ macro_rules! impl_storage {
         }
 
         impl<TOwner, TAccess> fmt::Octal for Storage<TOwner, TAccess, $type>
-        where TAccess: StorageAccess
+        where TAccess: StorageReadAccess
         {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::Octal::fmt(&self, f)
@@ -155,7 +170,7 @@ macro_rules! impl_storage {
         }
 
         impl<TOwner, TAccess> fmt::Binary for Storage<TOwner, TAccess,$type>
-        where TAccess: StorageAccess
+        where TAccess: StorageReadAccess
         {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::Binary::fmt(&self, f)
