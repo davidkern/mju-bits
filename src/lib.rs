@@ -33,7 +33,7 @@ limitations under the License.
 //! type RegisterFieldA = BitField<Register, U0, U7>;
 //! type RegisterFieldB = BitField<Register, U8, U24>;
 //!
-//! let mut reg = Register::new();
+//! let mut reg = Register::new(0);
 //! reg.set::<RegisterFieldA>(0x56);
 //! reg.set::<RegisterFieldB>(0x1234);
 //! assert_eq!(reg.get::<RegisterAll>(), 0x00123456);
@@ -84,7 +84,7 @@ mod test {
                 type RegisterFieldLo = BitField<Register, $lo0, $lo1>;
                 type RegisterFieldHi = BitField<Register, $hi0, $hi1>;
         
-                let mut reg = Register::new();
+                let mut reg = Register::new(0);
                 assert_eq!(reg.get::<RegisterFieldLo>(), 0);
                 assert_eq!(reg.get::<RegisterFieldHi>(), 0);
         

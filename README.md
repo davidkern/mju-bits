@@ -9,7 +9,7 @@
 use mju_bits::*;
 
 struct RegisterMarker;
-type Register = Storage<RegisterMarker, u32>;
+type Register = Storage<RegisterMarker, RW, u32>;
 type RegisterAll = BitField<Register, U0, U31>;
 type RegisterFieldA = BitField<Register, U0, U7>;
 type RegisterFieldB = BitField<Register, U8, U24>;
@@ -28,11 +28,11 @@ For example, this won't compile:
 use mju_bits::*;
 
 struct FooMarker;
-type Foo = Storage<FooMarker, u8>;
+type Foo = Storage<FooMarker, RW, u8>;
 type FooField = BitField<Foo, U0, U1>;
 
 struct BarMarker;
-type Bar = Storage<BarMarker, u8>;
+type Bar = Storage<BarMarker, RW, u8>;
 
 let bar = Bar::new();
 

@@ -51,7 +51,7 @@ mod private {
 
 /// Stores a primitive value uniquely tagged with type `TOwner` and allows
 /// bitfield access to the value through specializations of the `BitField` type.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Storage<TOwner, TAccess, TData>
 where
     TAccess: StorageAccess,
@@ -73,9 +73,9 @@ macro_rules! impl_storage {
         where TAccess: StorageAccess
         {
             /// Construct a new Storage
-            pub fn new() -> Self {
+            pub fn new(initial: $type) -> Self {
                 Storage {
-                    data: $type::default(),
+                    data: initial,
                     access: PhantomData,
                     owner: PhantomData,
                 }
