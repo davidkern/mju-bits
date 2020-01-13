@@ -49,27 +49,34 @@ mod private {
     impl Sealed for usize { }
 }
 
-/// Stores a primitive value uniquely tagged with type `TMarker` and allows
+/// Stores a primitive value uniquely tagged with type `TOwner` and allows
 /// bitfield access to the value through specializations of the `BitField` type.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct Storage<TMarker, TData>
-where TData: BitFieldAccess
+pub struct Storage<TOwner, TAccess, TData>
+where
+    TAccess: StorageAccess,
+    TData: BitFieldAccess
 {
     /// The actual data
     data: TData,
 
+    /// Access specifier
+    access: PhantomData<TAccess>,
+
     /// Zero-sized field to make the concrete struct type unique
-    owner: PhantomData<TMarker>
+    owner: PhantomData<TOwner>
 }
 
 macro_rules! impl_storage {
     ($type:ident) => {
-        impl<TMarker> Storage<TMarker, $type>
+        impl<TOwner, TAccess> Storage<TOwner, TAccess, $type>
+        where TAccess: StorageAccess
         {
             /// Construct a new Storage
             pub fn new() -> Self {
                 Storage {
                     data: $type::default(),
+                    access: PhantomData,
                     owner: PhantomData,
                 }
             }
@@ -101,35 +108,40 @@ macro_rules! impl_storage {
             }
         }
 
-        impl<TMarker> fmt::Display for Storage<TMarker, $type>
+        impl<TOwner, TAccess> fmt::Display for Storage<TOwner, TAccess, $type>
+        where TAccess: StorageAccess
         {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 write!(f, "{}", self.data)
             }
         }
 
-        impl<TMarker> fmt::UpperHex for Storage<TMarker, $type>
+        impl<TOwner, TAccess> fmt::UpperHex for Storage<TOwner, TAccess, $type>
+        where TAccess: StorageAccess
         {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::UpperHex::fmt(&self, f)
             }
         }
 
-        impl<TMarker> fmt::LowerHex for Storage<TMarker, $type>
+        impl<TOwner, TAccess> fmt::LowerHex for Storage<TOwner, TAccess, $type>
+        where TAccess: StorageAccess
         {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::LowerHex::fmt(&self, f)
             }
         }
 
-        impl<TMarker> fmt::Octal for Storage<TMarker, $type>
+        impl<TOwner, TAccess> fmt::Octal for Storage<TOwner, TAccess, $type>
+        where TAccess: StorageAccess
         {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::Octal::fmt(&self, f)
             }
         }
 
-        impl<TMarker> fmt::Binary for Storage<TMarker, $type>
+        impl<TOwner, TAccess> fmt::Binary for Storage<TOwner, TAccess,$type>
+        where TAccess: StorageAccess
         {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::Binary::fmt(&self, f)
@@ -140,11 +152,13 @@ macro_rules! impl_storage {
 
 macro_rules! impl_from {
     ($type:ident, $from:ident) => {
-        impl<TMarker> From<$from> for Storage<TMarker, $type>
+        impl<TOwner, TAccess> From<$from> for Storage<TOwner, TAccess, $type>
+        where TAccess: StorageAccess
         {
             fn from(value: $from) -> Self {
                 Self {
                     data: value.into(),
+                    access: PhantomData,
                     owner: PhantomData,
                 }
             }
@@ -154,13 +168,15 @@ macro_rules! impl_from {
 
 macro_rules! impl_tryfrom {
     ($type:ident, $from:ident) => {
-        impl<TMarker> TryFrom<$from> for Storage<TMarker, $type>
+        impl<TOwner, TAccess> TryFrom<$from> for Storage<TOwner, TAccess, $type>
+        where TAccess: StorageAccess
         {
             type Error = <$type as TryFrom<$from>>::Error;
 
             fn try_from(value: $from) -> Result<Self, <$type as TryFrom<$from>>::Error> {
                 Ok(Self {
                     data: $type::try_from(value)?,
+                    access: PhantomData,
                     owner: PhantomData,
                 })
             }
@@ -212,11 +228,11 @@ mod test {
         struct Marker;
 
         fn assert_send<T: Send>() {}
-        assert_send::<Storage<Marker, u8>>();
-        assert_send::<Storage<Marker, u16>>();
-        assert_send::<Storage<Marker, u32>>();
-        assert_send::<Storage<Marker, u64>>();
-        assert_send::<Storage<Marker, usize>>();
+        assert_send::<Storage<Marker, RW, u8>>();
+        assert_send::<Storage<Marker, RW, u16>>();
+        assert_send::<Storage<Marker, RW, u32>>();
+        assert_send::<Storage<Marker, RW, u64>>();
+        assert_send::<Storage<Marker, RW, usize>>();
     }
 
     #[test]
@@ -224,10 +240,10 @@ mod test {
         struct Marker;
 
         fn assert_sync<T: Sync>() {}
-        assert_sync::<Storage<Marker, u8>>();
-        assert_sync::<Storage<Marker, u16>>();
-        assert_sync::<Storage<Marker, u32>>();
-        assert_sync::<Storage<Marker, u64>>();
-        assert_sync::<Storage<Marker, usize>>();
+        assert_sync::<Storage<Marker, RW, u8>>();
+        assert_sync::<Storage<Marker, RW, u16>>();
+        assert_sync::<Storage<Marker, RW, u32>>();
+        assert_sync::<Storage<Marker, RW, u64>>();
+        assert_sync::<Storage<Marker, RW, usize>>();
     }
 }

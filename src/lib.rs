@@ -28,7 +28,7 @@ limitations under the License.
 //! use mju_bits::*;
 //!
 //! struct RegisterMarker;
-//! type Register = Storage<RegisterMarker, u32>;
+//! type Register = Storage<RegisterMarker, RW, u32>;
 //! type RegisterAll = BitField<Register, U0, U31>;
 //! type RegisterFieldA = BitField<Register, U0, U7>;
 //! type RegisterFieldB = BitField<Register, U8, U24>;
@@ -47,11 +47,11 @@ limitations under the License.
 //! use mju_bits::*;
 //!
 //! struct FooMarker;
-//! type Foo = Storage<FooMarker, u8>;
+//! type Foo = Storage<FooMarker, RW, u8>;
 //! type FooField = BitField<Foo, U0, U1>;
 //!
 //! struct BarMarker;
-//! type Bar = Storage<BarMarker, u8>;
+//! type Bar = Storage<BarMarker, RW, u8>;
 //!
 //! let bar = Bar::new();
 //! bar.get::<FooField>();
@@ -63,6 +63,7 @@ pub mod access;
 pub mod bitfield;
 pub mod storage;
 
+pub use access::*;
 pub use bitfield::*;
 pub use storage::*;
 
@@ -78,7 +79,7 @@ mod test {
             #[test]
             fn $name() {
                 struct RegisterMarker;
-                type Register = Storage<RegisterMarker, $type>;
+                type Register = Storage<RegisterMarker, RW, $type>;
                 type RegisterAll = BitField<Register, $lo0, $hi1>;
                 type RegisterFieldLo = BitField<Register, $lo0, $lo1>;
                 type RegisterFieldHi = BitField<Register, $hi0, $hi1>;
